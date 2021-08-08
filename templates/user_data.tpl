@@ -126,6 +126,30 @@ function install-graphic-driver {
     }
 }
 
+function install-logmein {
+    # install logmein
+    $downloadPath1 = "C:\Logmein.msi"
+    [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
+    (New-Object System.Net.WebClient).DownloadFile("https://secure.logmein.com/Logmein.msi", $downloadPath1)
+    msiexec.exe /q /l* c:\logfile.txt /i $downloadPath REBOOTYESNO=No
+}
+
+function install-vrdesktop {
+    # virtual desktop
+    $downloadPath = "C:\VirtualDesktop.Streamer.Setup.exe"
+    [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
+    (New-Object System.Net.WebClient).DownloadFile("https://download.vrdesktop.net/files/VirtualDesktop.Streamer.Setup.exe", $downloadPath)
+    msiexec.exe /q /l* c:\logfile2.txt /i $downloadPath REBOOTYESNO=No
+}
+
+function install-games {
+    # install logmein and virtual desktop
+    $user = "${var.steam_user}"
+    $password = "${var.steam_password}"
+    "C:\Program Files (x86)\Steam.exe" -login $user $password
+    "C:\Program Files (x86)\steamcmd.exe" +login $user $password +force_install_dir c:\games +app_update 1172620
+}
+
 install-chocolatey
 Install-PackageProvider -Name NuGet -Force
 choco install awstools.powershell
@@ -146,6 +170,8 @@ install-graphic-driver
 
 %{ if var.install_steam }
 choco install steam
+choco install steamcmd
+install-games
 %{ endif }
 
 %{ if var.install_gog_galaxy }
@@ -163,5 +189,8 @@ choco install origin
 %{ if var.install_epic_games_launcher }
 choco install epicgameslauncher
 %{ endif }
+
+install-logmein
+install-vrdesktop
 
 </powershell>

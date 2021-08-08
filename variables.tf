@@ -20,7 +20,7 @@ program = ["bash", "-c", "curl -s 'https://api.ipify.org?format=json'"]
 variable "my_public_ip" {
   description = "Please replace this with your public IP address."
   type = string
-  default = ${var.my_public_ip}
+  default = "1.1.1.1"
 }
 
 variable "instance_type" {
@@ -63,6 +63,18 @@ variable "install_steam" {
   description = "Download and install Valve Steam on first boot"
   type = bool
   default = true
+}
+
+variable "steam_user" {
+  description = "Steam username for auto-login"
+  type = string
+  default = ""
+}
+
+variable "steam_password" {
+  description = "Steam password for auto-login"
+  type = string
+  default = ""
 }
 
 variable "install_gog_galaxy" {

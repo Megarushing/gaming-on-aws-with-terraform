@@ -67,6 +67,50 @@ resource "aws_security_group_rule" "vnc_ingress" {
   security_group_id = aws_security_group.default.id
 }
 
+# Allow parsec connections from the local ip
+resource "aws_security_group_rule" "parsec_ingress" {
+  type = "ingress"
+  description = "Allow parsec connections"
+  from_port = 8000
+  to_port = 8011
+  protocol = "udp"
+  cidr_blocks = ["${var.my_public_ip}/32"]
+  security_group_id = aws_security_group.default.id
+}
+
+# Allow steam connections from the local ip
+resource "aws_security_group_rule" "steam_ingress_udp" {
+  type = "ingress"
+  description = "Allow steam connections"
+  from_port = 27000
+  to_port = 27100
+  protocol = "udp"
+  cidr_blocks = ["${var.my_public_ip}/32"]
+  security_group_id = aws_security_group.default.id
+}
+
+# Allow steam connections from the local ip
+resource "aws_security_group_rule" "steam_ingress_tcp" {
+  type = "ingress"
+  description = "Allow parsec connections"
+  from_port = 27036
+  to_port = 27036
+  protocol = "tcp"
+  cidr_blocks = ["${var.my_public_ip}/32"]
+  security_group_id = aws_security_group.default.id
+}
+
+# Allow vr desktop connections from the local ip
+resource "aws_security_group_rule" "vrdesktop_ingress" {
+  type = "ingress"
+  description = "Allow vrdesktop connections"
+  from_port = 38810
+  to_port = 38840
+  protocol = "tcp"
+  cidr_blocks = ["${var.my_public_ip}/32"]
+  security_group_id = aws_security_group.default.id
+}
+
 
 # Allow outbound connection to everywhere
 resource "aws_security_group_rule" "default" {
@@ -163,6 +207,8 @@ resource "aws_spot_instance_request" "windows_instance" {
       install_auto_login=var.install_auto_login,
       install_graphic_card_driver=var.install_graphic_card_driver,
       install_steam=var.install_steam,
+      steam_user=var.steam_user,
+      steam_password=var.steam_password,
       install_gog_galaxy=var.install_gog_galaxy,
       install_origin=var.install_origin,
       install_epic_games_launcher=var.install_epic_games_launcher,
