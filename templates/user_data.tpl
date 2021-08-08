@@ -128,9 +128,9 @@ function install-graphic-driver {
 
 function install-logmein {
     # install logmein
-    $downloadPath1 = "C:\Logmein.msi"
+    $downloadPath = "C:\Logmein.msi"
     [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
-    (New-Object System.Net.WebClient).DownloadFile("https://secure.logmein.com/Logmein.msi", $downloadPath1)
+    (New-Object System.Net.WebClient).DownloadFile("https://secure.logmein.com/Logmein.msi", $downloadPath)
     msiexec.exe /q /l* c:\logfile.txt /i $downloadPath REBOOTYESNO=No
 }
 
@@ -139,15 +139,32 @@ function install-vrdesktop {
     $downloadPath = "C:\VirtualDesktop.Streamer.Setup.exe"
     [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
     (New-Object System.Net.WebClient).DownloadFile("https://download.vrdesktop.net/files/VirtualDesktop.Streamer.Setup.exe", $downloadPath)
-    msiexec.exe /q /l* c:\logfile2.txt /i $downloadPath REBOOTYESNO=No
+    iex "$downloadPath /q /l* c:\logfile2.txt REBOOTYESNO=No" 
 }
 
 function install-games {
     # install logmein and virtual desktop
-    $user = "${var.steam_user}"
-    $password = "${var.steam_password}"
-    "C:\Program Files (x86)\Steam.exe" -login $user $password
-    "C:\Program Files (x86)\steamcmd.exe" +login $user $password +force_install_dir c:\games +app_update 1172620
+    $steam_user = "${var.steam_user}"
+    $steam_password = "${var.steam_password}"
+    $steam_folder = "C:\Program Files (x86)\Steam"
+    $steam_shortcut = "C:\Users\Public\Desktop\Steam.lnk"
+    #make steam shortcut
+    $WScriptShell = New-Object -ComObject WScript.Shell
+    $Shortcut = $WScriptShell.CreateShortcut($steam_shortcut)
+    $Shortcut.TargetPath =  "$steam_folder\steam.exe"
+    $Shortcut.Arguments =  "-login $steam_user $steam_password"
+    $Shortcut.WorkingDirectory =  "$steam_folder"
+    $Shortcut.Save()
+    #schedule steam to start on boot logged in
+    Start-Process -FilePath $steam_shortcut
+    $action = New-ScheduledTaskAction -Execute $steam_shortcut
+    $trigger = New-JobTrigger -AtStartup -RandomDelay 00:00:30
+    Register-ScheduledJob -Trigger $trigger -Action $action -Name StartSteam
+    #install games
+    $games = ${var.steam_games}
+    foreach ($g in $games) {
+        steamcmd +login $steam_user $steam_password +force_install_dir "$steam_folder\" +app_update $g +quit
+    }
 }
 
 install-chocolatey
@@ -168,12 +185,6 @@ install-autologin
 install-graphic-driver
 %{ endif }
 
-%{ if var.install_steam }
-choco install steam
-choco install steamcmd
-install-games
-%{ endif }
-
 %{ if var.install_gog_galaxy }
 choco install goggalaxy
 %{ endif }
@@ -190,7 +201,17 @@ choco install origin
 choco install epicgameslauncher
 %{ endif }
 
-install-logmein
+%{ if var.install_vrdesktop }
 install-vrdesktop
+%{ endif }
 
+install-logmein
+
+%{ if var.install_steam }
+choco install steam
+choco install steamcmd
+install-games
+%{ endif }
+
+Restart-Computer
 </powershell>
